@@ -1,16 +1,249 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Coordinator Dashboard - CPS 406 App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coordinator Dashboard - Co-op Connect</title>
   <link rel="stylesheet" href="../assets/css/global.css">
   <link rel="stylesheet" href="../assets/css/dashboard.css">
 </head>
 <body>
   <div class="dashboard-container">
-    <h1>Coordinator Dashboard</h1>
-    <!-- Coordinator dashboard content will be added here -->
+    <!-- Left Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <img src="../assets/images/Logo.png" alt="Logo" class="sidebar-logo">
+        <h2 class="sidebar-title">Co-op Connect</h2>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <ul class="nav-list">
+          <li class="nav-item active" data-section="dashboard">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">Dashboard</span>
+          </li>
+          <li class="nav-item" data-section="students">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">Students</span>
+          </li>
+          <li class="nav-item" data-section="applications">
+            <span class="nav-icon">📝</span>
+            <span class="nav-text">Applications</span>
+          </li>
+          <li class="nav-item" data-section="employers">
+            <span class="nav-icon">🏢</span>
+            <span class="nav-text">Employers</span>
+          </li>
+          <li class="nav-item" data-section="reports">
+            <span class="nav-icon">📈</span>
+            <span class="nav-text">Reports</span>
+          </li>
+          <li class="nav-item" data-section="settings">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">Settings</span>
+          </li>
+        </ul>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <button class="logout-btn" id="logoutBtn">
+          <span class="nav-icon">🚪</span>
+          <span class="nav-text">Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Dashboard Section -->
+      <section class="content-section active" id="dashboard-section">
+        <div class="content-header">
+          <h1>Welcome, Coordinator!</h1>
+          <p class="content-subtitle">Overview of your co-op program</p>
+        </div>
+
+        <!-- Statistic Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-content">
+              <span class="stat-title">Total Students</span>
+              <span class="stat-value">245</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon">🏢</div>
+            <div class="stat-content">
+              <span class="stat-title">Active Employers</span>
+              <span class="stat-value">48</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-content">
+              <span class="stat-title">Pending Applications</span>
+              <span class="stat-value">32</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-content">
+              <span class="stat-title">Upcoming Deadlines</span>
+              <span class="stat-value">5</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Two Column Layout -->
+        <div class="dashboard-grid">
+          <!-- Left Column - Recent Activity -->
+          <div class="content-column">
+            <div class="column-card">
+              <h2 class="column-title">Recent Activity</h2>
+              <div class="terms-list">
+                <div class="term-item">
+                  <div class="term-info">
+                    <span class="term-season">New Application</span>
+                    <span class="term-employer">John Smith applied to Tech Corp</span>
+                    <span class="term-grade">2 hours ago</span>
+                  </div>
+                  <div class="term-status">
+                    <span class="status-badge pending">Pending Review</span>
+                  </div>
+                </div>
+                
+                <div class="term-item">
+                  <div class="term-info">
+                    <span class="term-season">Report Submitted</span>
+                    <span class="term-employer">Sarah Johnson submitted work report</span>
+                    <span class="term-grade">5 hours ago</span>
+                  </div>
+                  <div class="term-status">
+                    <span class="status-badge completed">Approved</span>
+                  </div>
+                </div>
+                
+                <div class="term-item">
+                  <div class="term-info">
+                    <span class="term-season">Employer Added</span>
+                    <span class="term-employer">Innovation Labs joined as employer</span>
+                    <span class="term-grade">1 day ago</span>
+                  </div>
+                  <div class="term-status">
+                    <span class="status-badge completed">Active</span>
+                  </div>
+                </div>
+                
+                <div class="term-item">
+                  <div class="term-info">
+                    <span class="term-season">Grade Updated</span>
+                    <span class="term-employer">Mike Davis received grade for Fall 2023</span>
+                    <span class="term-grade">2 days ago</span>
+                  </div>
+                  <div class="term-status">
+                    <span class="status-badge completed">Completed</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column - Quick Actions -->
+          <div class="content-column">
+            <div class="column-card">
+              <h2 class="column-title">Quick Actions</h2>
+              <div class="actions-list">
+                <button class="action-btn">
+                  <span class="action-icon">📧</span>
+                  <span class="action-text">Send Announcement</span>
+                </button>
+                
+                <button class="action-btn">
+                  <span class="action-icon">✓</span>
+                  <span class="action-text">Review Applications</span>
+                </button>
+                
+                <button class="action-btn">
+                  <span class="action-icon">📊</span>
+                  <span class="action-text">Generate Report</span>
+                </button>
+                
+                <button class="action-btn">
+                  <span class="action-icon">👤</span>
+                  <span class="action-text">Manage Students</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Students Section -->
+      <section class="content-section" id="students-section">
+        <div class="content-header">
+          <h1>Students</h1>
+          <p class="content-subtitle">Manage and view all student records</p>
+        </div>
+        <div class="placeholder-content">
+          <p>Students management content will be displayed here.</p>
+        </div>
+      </section>
+
+      <!-- Applications Section -->
+      <section class="content-section" id="applications-section">
+        <div class="content-header">
+          <h1>Applications</h1>
+          <p class="content-subtitle">Review and process student applications</p>
+        </div>
+        <div class="placeholder-content">
+          <p>Applications content will be displayed here.</p>
+        </div>
+      </section>
+
+      <!-- Employers Section -->
+      <section class="content-section" id="employers-section">
+        <div class="content-header">
+          <h1>Employers</h1>
+          <p class="content-subtitle">Manage employer partnerships</p>
+        </div>
+        <div class="placeholder-content">
+          <p>Employers content will be displayed here.</p>
+        </div>
+      </section>
+
+      <!-- Reports Section -->
+      <section class="content-section" id="reports-section">
+        <div class="content-header">
+          <h1>Reports</h1>
+          <p class="content-subtitle">View and generate program reports</p>
+        </div>
+        <div class="placeholder-content">
+          <p>Reports content will be displayed here.</p>
+        </div>
+      </section>
+
+      <!-- Settings Section -->
+      <section class="content-section" id="settings-section">
+        <div class="content-header">
+          <h1>Settings</h1>
+          <p class="content-subtitle">Configure your preferences</p>
+        </div>
+        <div class="placeholder-content">
+          <p>Settings content will be displayed here.</p>
+        </div>
+      </section>
+    </main>
   </div>
+
+  <!-- Firebase SDK via CDN -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  
+  <script src="../assets/js/firebase.js"></script>
   <script src="../assets/js/navigation.js"></script>
   <script src="../assets/js/coordinator.js"></script>
 </body>
