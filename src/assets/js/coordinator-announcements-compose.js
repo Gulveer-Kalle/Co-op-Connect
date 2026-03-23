@@ -28,6 +28,10 @@ async function getCoordinatorAnnouncementComposeContext() {
     return null;
   }
 
+  if (window.backfillExistingStudentAssignments) {
+    await window.backfillExistingStudentAssignments();
+  }
+
   const [coordinatorDoc, assignedStudentsSnapshot] = await Promise.all([
     firebase.firestore().collection('users').doc(authUser.uid).get(),
     firebase.firestore()

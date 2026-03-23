@@ -33,13 +33,52 @@ function sortPseudoMailByUpdatedAt(items) {
   });
 }
 
+function backfillStudentAnnouncementsForCoordinator(studentId, coordinatorId) {
+  const studentAnnouncements = parsePseudoMailStorage(PSEUDO_STUDENT_ANNOUNCEMENT_KEY);
+
+  if (!studentId || !coordinatorId) {
+    return studentAnnouncements;
+  }
+
+  const coordinatorAnnouncements = parsePseudoMailStorage(PSEUDO_COORDINATOR_ANNOUNCEMENT_KEY)
+    .filter((announcement) => announcement.coordinatorId === coordinatorId);
+  const existingAnnouncementIds = new Set(
+    studentAnnouncements
+      .filter((announcement) => announcement.studentId === studentId)
+      .map((announcement) => announcement.announcementId || announcement.id)
+  );
+  const nextStudentAnnouncements = coordinatorAnnouncements
+    .filter((announcement) => !existingAnnouncementIds.has(announcement.id))
+    .map((announcement) => ({
+      id: createPseudoMailId('local-student-announcement'),
+      announcementId: announcement.id,
+      studentId,
+      studentEmail: '',
+      coordinatorId: announcement.coordinatorId,
+      coordinatorName: announcement.coordinatorName || 'Coordinator',
+      coordinatorEmail: announcement.coordinatorEmail || '',
+      subject: announcement.subject || '',
+      message: announcement.message || '',
+      read: false,
+      createdAt: announcement.createdAt,
+      updatedAt: announcement.updatedAt || announcement.createdAt,
+      source: announcement.source || 'local'
+    }));
+
+  if (!nextStudentAnnouncements.length) {
+    return studentAnnouncements;
+  }
+
+  const mergedAnnouncements = studentAnnouncements.concat(nextStudentAnnouncements);
+  writePseudoMailStorage(PSEUDO_STUDENT_ANNOUNCEMENT_KEY, mergedAnnouncements);
+  return mergedAnnouncements;
+}
+
 window.pseudoMailStore = {
   sendCoordinatorAnnouncement(payload) {
     const nowIso = new Date().toISOString();
-    const coordinatorAnnouncements = parsePseudoMailStorage(PSEUDO_COORDINATOR_ANNOUNCEMENT_KEY)
-      .filter((announcement) => announcement.coordinatorId !== payload.coordinatorId);
-    const studentAnnouncements = parsePseudoMailStorage(PSEUDO_STUDENT_ANNOUNCEMENT_KEY)
-      .filter((announcement) => announcement.coordinatorId !== payload.coordinatorId);
+    const coordinatorAnnouncements = parsePseudoMailStorage(PSEUDO_COORDINATOR_ANNOUNCEMENT_KEY);
+    const studentAnnouncements = parsePseudoMailStorage(PSEUDO_STUDENT_ANNOUNCEMENT_KEY);
 
     const announcementId = createPseudoMailId('local-coordinator-announcement');
     const coordinatorAnnouncement = {
@@ -94,9 +133,9 @@ window.pseudoMailStore = {
     );
   },
 
-  getStudentAnnouncements(studentId) {
+  getStudentAnnouncements(studentId, coordinatorId = '') {
     return sortPseudoMailByUpdatedAt(
-      parsePseudoMailStorage(PSEUDO_STUDENT_ANNOUNCEMENT_KEY)
+      backfillStudentAnnouncementsForCoordinator(studentId, coordinatorId)
         .filter((announcement) => announcement.studentId === studentId)
     );
   },

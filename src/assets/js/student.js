@@ -231,7 +231,7 @@ function initializeStudentAnnouncementInteractions() {
   });
 }
 
-async function loadStudentDashboardAnnouncements() {
+async function loadStudentDashboardAnnouncements(studentAssignmentData = null) {
   const list = document.getElementById('studentDashboardAnnouncementsList');
   if (!list) {
     return;
@@ -246,8 +246,12 @@ async function loadStudentDashboardAnnouncements() {
       return;
     }
 
+    const resolvedAssignmentData = studentAssignmentData || await loadStudentAssignments();
     const announcements = window.pseudoMailStore?.getStudentAnnouncements
-      ? window.pseudoMailStore.getStudentAnnouncements(user.uid)
+      ? window.pseudoMailStore.getStudentAnnouncements(
+          user.uid,
+          resolvedAssignmentData?.assignedCoordinatorId || ''
+        )
       : [];
 
     if (!announcements.length) {
@@ -385,6 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   loadStudentAssignments().then((assignmentData) => {
     studentAssignmentData = assignmentData;
+    loadStudentDashboardAnnouncements(studentAssignmentData);
   });
 
   const actionBtns = document.querySelectorAll('.action-btn');
@@ -414,7 +419,6 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   loadStudentDashboardOverview();
-  loadStudentDashboardAnnouncements();
   initializeStudentAnnouncementInteractions();
 
   const coordBtn = document.getElementById('viewCoordinatorBtn');

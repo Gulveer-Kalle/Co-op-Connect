@@ -41,14 +41,83 @@ function setAssignmentUserFields(update, keyPrefix, user) {
   update[`assigned${keyPrefix}Email`] = user.email || '';
 }
 
+function getAssignmentFieldCandidates(keyPrefix) {
+  const normalizedPrefix = `${keyPrefix.charAt(0).toLowerCase()}${keyPrefix.slice(1)}`;
+
+  return {
+    ids: [`assigned${keyPrefix}Id`, `${normalizedPrefix}Id`, `${normalizedPrefix}Uid`],
+    names: [`assigned${keyPrefix}Name`, `${normalizedPrefix}Name`],
+    emails: [`assigned${keyPrefix}Email`, `${normalizedPrefix}Email`]
+  };
+}
+
+function getFirstAssignmentFieldValue(studentData, keys) {
+  const matchedKey = keys.find((key) => {
+    const value = studentData[key];
+    return typeof value === 'string' ? Boolean(value.trim()) : Boolean(value);
+  });
+
+  return matchedKey ? studentData[matchedKey] : '';
+}
+
+function normalizeAssignmentMatchValue(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+}
+
+function resolveAssignedUser(studentData, keyPrefix, users) {
+  const fieldCandidates = getAssignmentFieldCandidates(keyPrefix);
+  const preferredId = String(getFirstAssignmentFieldValue(studentData, fieldCandidates.ids) || '').trim();
+  const preferredEmail = normalizeAssignmentMatchValue(
+    getFirstAssignmentFieldValue(studentData, fieldCandidates.emails)
+  );
+  const preferredName = normalizeAssignmentMatchValue(
+    getFirstAssignmentFieldValue(studentData, fieldCandidates.names)
+  );
+
+  if (preferredId) {
+    const matchedById = users.find((user) => user.uid === preferredId);
+    if (matchedById) {
+      return matchedById;
+    }
+  }
+
+  if (preferredEmail) {
+    const matchedByEmail = users.find((user) => normalizeAssignmentMatchValue(user.email) === preferredEmail);
+    if (matchedByEmail) {
+      return matchedByEmail;
+    }
+  }
+
+  if (!preferredName) {
+    return null;
+  }
+
+  const exactNameMatches = users.filter((user) => {
+    return normalizeAssignmentMatchValue(getAssignmentDisplayName(user)) === preferredName;
+  });
+
+  if (exactNameMatches.length === 1) {
+    return exactNameMatches[0];
+  }
+
+  const partialNameMatches = users.filter((user) => {
+    const displayName = normalizeAssignmentMatchValue(getAssignmentDisplayName(user));
+    return displayName && (displayName.includes(preferredName) || preferredName.includes(displayName));
+  });
+
+  return partialNameMatches.length === 1 ? partialNameMatches[0] : null;
+}
+
 function syncAssignmentUser(update, studentData, keyPrefix, users) {
   const idKey = `assigned${keyPrefix}Id`;
   const nameKey = `assigned${keyPrefix}Name`;
   const emailKey = `assigned${keyPrefix}Email`;
-  const currentAssignedId = studentData[idKey] || '';
-  const currentAssignedUser = users.find((user) => user.uid === currentAssignedId);
+  const currentAssignedUser = resolveAssignedUser(studentData, keyPrefix, users);
 
-  if (!currentAssignedId || !currentAssignedUser) {
+  if (!currentAssignedUser) {
     const replacementUser = pickRandomAssignmentUser(users);
     setAssignmentUserFields(update, keyPrefix, replacementUser);
     return;
@@ -56,8 +125,13 @@ function syncAssignmentUser(update, studentData, keyPrefix, users) {
 
   const expectedName = getAssignmentDisplayName(currentAssignedUser);
   const expectedEmail = currentAssignedUser.email || '';
+  const expectedId = currentAssignedUser.uid;
 
-  if (studentData[nameKey] !== expectedName || studentData[emailKey] !== expectedEmail) {
+  if (
+    studentData[idKey] !== expectedId ||
+    studentData[nameKey] !== expectedName ||
+    studentData[emailKey] !== expectedEmail
+  ) {
     setAssignmentUserFields(update, keyPrefix, currentAssignedUser);
   }
 }
