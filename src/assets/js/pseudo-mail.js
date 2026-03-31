@@ -1,6 +1,7 @@
 const PSEUDO_COORDINATOR_ANNOUNCEMENT_KEY = 'coordinatorPseudoAnnouncements';
 const PSEUDO_STUDENT_ANNOUNCEMENT_KEY = 'studentPseudoAnnouncements';
 const PSEUDO_COORDINATOR_INBOX_KEY = 'coordinatorPseudoInboxMessages';
+const PSEUDO_STUDENT_DELETED_ANNOUNCEMENT_KEY = 'studentDeletedPseudoAnnouncements';
 
 function parsePseudoMailStorage(key) {
   try {
@@ -33,6 +34,14 @@ function sortPseudoMailByUpdatedAt(items) {
   });
 }
 
+function getDeletedStudentAnnouncementKeys(studentId) {
+  return new Set(
+    parsePseudoMailStorage(PSEUDO_STUDENT_DELETED_ANNOUNCEMENT_KEY)
+      .filter((entry) => entry?.studentId === studentId && entry?.announcementKey)
+      .map((entry) => entry.announcementKey)
+  );
+}
+
 function backfillStudentAnnouncementsForCoordinator(studentId, coordinatorId) {
   const studentAnnouncements = parsePseudoMailStorage(PSEUDO_STUDENT_ANNOUNCEMENT_KEY);
 
@@ -42,13 +51,17 @@ function backfillStudentAnnouncementsForCoordinator(studentId, coordinatorId) {
 
   const coordinatorAnnouncements = parsePseudoMailStorage(PSEUDO_COORDINATOR_ANNOUNCEMENT_KEY)
     .filter((announcement) => announcement.coordinatorId === coordinatorId);
+  const deletedAnnouncementKeys = getDeletedStudentAnnouncementKeys(studentId);
   const existingAnnouncementIds = new Set(
     studentAnnouncements
       .filter((announcement) => announcement.studentId === studentId)
       .map((announcement) => announcement.announcementId || announcement.id)
   );
   const nextStudentAnnouncements = coordinatorAnnouncements
-    .filter((announcement) => !existingAnnouncementIds.has(announcement.id))
+    .filter((announcement) => (
+      !existingAnnouncementIds.has(announcement.id) &&
+      !deletedAnnouncementKeys.has(announcement.id)
+    ))
     .map((announcement) => ({
       id: createPseudoMailId('local-student-announcement'),
       announcementId: announcement.id,
@@ -166,8 +179,29 @@ window.pseudoMailStore = {
       return;
     }
 
-    const nextAnnouncements = parsePseudoMailStorage(PSEUDO_STUDENT_ANNOUNCEMENT_KEY)
+    const studentAnnouncements = parsePseudoMailStorage(PSEUDO_STUDENT_ANNOUNCEMENT_KEY);
+    const announcementToDelete = studentAnnouncements.find((announcement) => announcement.id === announcementId);
+    const announcementKey = announcementToDelete?.announcementId || announcementToDelete?.id || announcementId;
+    const studentId = announcementToDelete?.studentId || '';
+    const nextAnnouncements = studentAnnouncements
       .filter((announcement) => announcement.id !== announcementId);
+
+    if (studentId && announcementKey) {
+      const deletedAnnouncements = parsePseudoMailStorage(PSEUDO_STUDENT_DELETED_ANNOUNCEMENT_KEY);
+      const alreadyDeleted = deletedAnnouncements.some((entry) => (
+        entry?.studentId === studentId && entry?.announcementKey === announcementKey
+      ));
+
+      if (!alreadyDeleted) {
+        deletedAnnouncements.push({
+          studentId,
+          announcementKey,
+          deletedAt: new Date().toISOString()
+        });
+        writePseudoMailStorage(PSEUDO_STUDENT_DELETED_ANNOUNCEMENT_KEY, deletedAnnouncements);
+      }
+    }
+
     writePseudoMailStorage(PSEUDO_STUDENT_ANNOUNCEMENT_KEY, nextAnnouncements);
   },
 

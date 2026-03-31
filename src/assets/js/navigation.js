@@ -20,6 +20,10 @@ console.log('Navigation loaded');
   initializeLogout();
 });
 
+function isBlockedDashboardRoute(role, url) {
+  return role === 'coordinator' && url === 'grades';
+}
+
 window.openDashboardSubscreen = function(url) {
   const dashboardSection = document.getElementById('dashboard-section');
   const subscreenContainer = document.getElementById('subscreen-container');
@@ -82,6 +86,16 @@ async function loadSubscreen(url, container) {
   
   try {
     const role = localStorage.getItem('userRole') || 'student';
+    if (isBlockedDashboardRoute(role, url)) {
+      container.innerHTML = `
+        <div class="error-message">
+          <h3>Page Unavailable</h3>
+          <p>This section is no longer available for coordinators.</p>
+        </div>
+      `;
+      return;
+    }
+
     const prefixedUrl = `${role}-${url}.html`;
     const isSubPageDocument = window.location.pathname.includes('/sub-pages/');
     const subPagesBase = isSubPageDocument ? './' : '../pages/sub-pages/';

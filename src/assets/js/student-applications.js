@@ -92,20 +92,24 @@ function setStudentApplicationActionButton({ text, disabled, onclickValue = '', 
   }
 }
 
+function hasSubmittedApplicationDocuments(data) {
+  return Boolean(data?.resumeUrl && data?.coverLetterUrl);
+}
+
 function updateApplicationStatusView(data) {
   const title = document.getElementById('studentApplicationTitle');
   const description = document.getElementById('studentApplicationDescription');
   const note = document.getElementById('studentApplicationNote');
   const badge = document.getElementById('studentApplicationBadge');
   const actionButton = document.getElementById('studentApplicationAction');
-  const hasUploadedDocuments = Boolean(data?.resumeUrl || data?.coverLetterUrl);
+  const hasUploadedDocuments = hasSubmittedApplicationDocuments(data);
   const coordinatorStatus = data?.coordinatorStatus || '';
 
   if (!title || !description || !note || !badge || !actionButton) {
     return;
   }
 
-  if (coordinatorStatus === 'approved') {
+  if (hasUploadedDocuments && coordinatorStatus === 'approved') {
     title.textContent = 'Approved';
     description.textContent = 'Your application has been approved by the coordinator.';
     note.textContent = 'You can move forward with the next co-op steps.';
@@ -115,7 +119,7 @@ function updateApplicationStatusView(data) {
     return;
   }
 
-  if (coordinatorStatus === 'rejected') {
+  if (hasUploadedDocuments && coordinatorStatus === 'rejected') {
     title.textContent = 'Rejected';
     description.textContent = 'Your application was reviewed by the coordinator.';
     note.textContent = 'Please contact the coordinator if you need more information.';
@@ -125,7 +129,7 @@ function updateApplicationStatusView(data) {
     return;
   }
 
-  if (coordinatorStatus === 'in_process') {
+  if (hasUploadedDocuments && coordinatorStatus === 'in_process') {
     title.textContent = 'In Process';
     description.textContent = 'Your application is currently being reviewed by the coordinator.';
     note.textContent = 'No further action is needed from you right now.';
@@ -286,6 +290,7 @@ function initializeApplicationSubmit() {
       await getApplicationDocRef(user.uid).set({
         userId: user.uid,
         status: 'pending',
+        coordinatorStatus: 'pending',
         resumeFileName: resumeFile.name,
         resumeUrl: resumeUpload.secure_url,
         resumePublicId: resumeUpload.public_id,

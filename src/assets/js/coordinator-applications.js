@@ -5,8 +5,12 @@ let coordinatorApplicationStatusFilter = 'all';
 let coordinatorApplicationStudents = [];
 let coordinatorApplicationMap = new Map();
 
+function hasSubmittedApplicationDocuments(applicationDoc) {
+  return Boolean(applicationDoc?.resumeUrl && applicationDoc?.coverLetterUrl);
+}
+
 function getCoordinatorStatusPresentation(status, hasUploadedDocuments) {
-  if (!hasUploadedDocuments && (!status || status === 'pending')) {
+  if (!hasUploadedDocuments) {
     return { label: 'Not Submitted', className: 'rejected' };
   }
 
@@ -50,14 +54,14 @@ function buildDocumentLink(label, url, fileName) {
 function createApplicationCard(student, applicationDoc) {
   const hasResume = Boolean(applicationDoc?.resumeUrl);
   const hasCoverLetter = Boolean(applicationDoc?.coverLetterUrl);
-  const hasUploadedDocuments = hasResume || hasCoverLetter;
+  const hasUploadedDocuments = hasSubmittedApplicationDocuments(applicationDoc);
   const normalizedStatus = applicationDoc?.coordinatorStatus || applicationDoc?.status || 'pending';
   const status = getCoordinatorStatusPresentation(normalizedStatus, hasUploadedDocuments);
   const studentName = `${student.firstName || ''} ${student.lastName || ''}`.trim() || 'Unnamed Student';
 
   return `
     <div class="application-card" data-student-uid="${escapeHtml(student.uid)}">
-      <div class="application-menu-wrap" data-application-menu-wrap>
+      <div class="application-menu-wrap"${hasUploadedDocuments ? '' : ' hidden'} data-application-menu-wrap>
         <button class="application-menu-btn" type="button" data-application-menu-btn aria-label="Open application actions">...</button>
         <div class="application-menu" data-application-menu>
           <button class="application-menu-item" type="button" data-application-status="approved">Approve</button>
@@ -77,7 +81,11 @@ function createApplicationCard(student, applicationDoc) {
           ${buildDocumentLink('Cover Letter', applicationDoc?.coverLetterUrl, applicationDoc?.coverLetterFileName)}
         </div>
         <div class="application-card-note" data-application-note>
-          ${hasUploadedDocuments ? 'Documents uploaded and ready for coordinator review.' : 'This student has not uploaded application documents yet.'}
+          ${hasUploadedDocuments
+            ? 'Documents uploaded and ready for coordinator review.'
+            : (hasResume || hasCoverLetter)
+              ? 'This application is incomplete until both the resume and cover letter are submitted.'
+              : 'This student has not uploaded application documents yet.'}
         </div>
       </div>
     </div>
@@ -89,7 +97,7 @@ function matchesCoordinatorStatusFilter(applicationDoc, selectedStatus) {
     return true;
   }
 
-  const hasUploadedDocuments = Boolean(applicationDoc?.resumeUrl || applicationDoc?.coverLetterUrl);
+  const hasUploadedDocuments = hasSubmittedApplicationDocuments(applicationDoc);
   const normalizedStatus = applicationDoc?.coordinatorStatus || applicationDoc?.status || 'pending';
 
   if (selectedStatus === 'not_submitted') {
@@ -134,7 +142,7 @@ function updateCoordinatorApplicationSummary(students, applicationsMap) {
 
   students.forEach((student) => {
     const applicationDoc = applicationsMap.get(student.uid);
-    const hasUploadedDocuments = Boolean(applicationDoc?.resumeUrl || applicationDoc?.coverLetterUrl);
+    const hasUploadedDocuments = hasSubmittedApplicationDocuments(applicationDoc);
     const status = applicationDoc?.coordinatorStatus || applicationDoc?.status || 'pending';
 
     if (hasUploadedDocuments) {
@@ -145,7 +153,7 @@ function updateCoordinatorApplicationSummary(students, applicationsMap) {
       openCount += 1;
     }
 
-    if (status === 'approved') {
+    if (hasUploadedDocuments && status === 'approved') {
       approvedCount += 1;
     }
   });
@@ -226,8 +234,17 @@ async function updateCoordinatorApplicationStatus(studentUid, nextStatus, card) 
   const badge = card.querySelector('[data-application-badge]');
   const note = card.querySelector('[data-application-note]');
   const menu = card.querySelector('[data-application-menu]');
-  const hasUploadedDocuments = Boolean(card.querySelector('a.quick-view-btn'));
+  const applicationDoc = coordinatorApplicationMap.get(studentUid);
+  const hasUploadedDocuments = hasSubmittedApplicationDocuments(applicationDoc);
   const presentation = getCoordinatorStatusPresentation(nextStatus, hasUploadedDocuments);
+
+  if (!hasUploadedDocuments) {
+    alert('Students must submit both a resume and cover letter before the application can be reviewed.');
+    if (menu) {
+      menu.classList.remove('active');
+    }
+    return;
+  }
 
   try {
     await firebase.firestore().collection(COORDINATOR_APPLICATION_COLLECTION).doc(studentUid).set({

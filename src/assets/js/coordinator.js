@@ -90,6 +90,10 @@ function escapeCoordinatorDashboardHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
+function hasSubmittedCoordinatorApplication(application) {
+  return Boolean(application?.resumeUrl && application?.coverLetterUrl);
+}
+
 function getCoordinatorDashboardApplicationStatus(status) {
   switch (status) {
     case 'approved':
@@ -255,6 +259,10 @@ async function loadCoordinatorRecentActivity() {
       }
 
       const application = doc.data();
+      if (!hasSubmittedCoordinatorApplication(application)) {
+        return;
+      }
+
       const student = assignedStudentsById.get(doc.id);
       const submittedAt = application.submittedAt || application.updatedAt;
 
@@ -432,7 +440,7 @@ async function loadCoordinatorDashboardStats() {
       }
 
       const application = doc.data();
-      const hasUploadedDocuments = Boolean(application.resumeUrl || application.coverLetterUrl);
+      const hasUploadedDocuments = hasSubmittedCoordinatorApplication(application);
       const status = application.coordinatorStatus || application.status || 'pending';
 
       if (hasUploadedDocuments && (status === 'pending' || status === 'in_process')) {
